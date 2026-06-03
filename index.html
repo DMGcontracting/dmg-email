@@ -312,11 +312,11 @@
     <div class="row2" style="margin-bottom:12px;">
       <div class="field">
         <label>Tenant ID</label>
-        <input type="text" id="tenantId" placeholder="xxxxxxxx-xxxx-…" />
+        <input type="text" id="tenantId" value="e8920695-bc3c-43df-acf2-8d101b8adb63" readonly />
       </div>
       <div class="field">
         <label>Client ID</label>
-        <input type="text" id="clientId" placeholder="xxxxxxxx-xxxx-…" />
+        <input type="text" id="clientId" value="30273390-649b-426d-bb06-e8ceba358bd6" readonly />
       </div>
     </div>
     <div style="display:flex; gap:10px; align-items:center;">
@@ -376,9 +376,9 @@ let msalInstance = null;
 let account = null;
 
 function getMsalConfig() {
-  const tenantId = document.getElementById('tenantId').value.trim();
-  const clientId = document.getElementById('clientId').value.trim();
-  if (!tenantId || !clientId) return null;
+  const tenantId = 'e8920695-bc3c-43df-acf2-8d101b8adb63';
+  const clientId = '30273390-649b-426d-bb06-e8ceba358bd6';
+  
   return {
     auth: {
       clientId,
