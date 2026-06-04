@@ -1,506 +1,262 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DMG Email Sender</title>
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.27.0/lib/msal-browser.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --bg: #0f0f0f;
-    --surface: #1a1a1a;
-    --surface2: #222222;
-    --border: #2e2e2e;
-    --border2: #3d3d3d;
-    --text: #f0ede8;
-    --muted: #888;
-    --accent: #e8b84b;
-    --accent2: #c49a30;
-    --success: #4caf7d;
-    --danger: #e05c5c;
-    --info: #5b9cf6;
-    --radius: 6px;
-    --radius-lg: 10px;
-  }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
-    min-height: 100vh;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    padding: 40px 16px 80px;
-  }
-
-  .shell {
-    width: 100%;
-    max-width: 640px;
-  }
-
-  /* Header */
-  .header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 36px;
-  }
-  .logo {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .logo-mark {
-    width: 36px; height: 36px;
-    background: var(--accent);
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'DM Mono', monospace;
-    font-weight: 500;
-    font-size: 13px;
-    color: #0f0f0f;
-    letter-spacing: -0.5px;
-  }
-  .logo-text {
-    font-size: 15px;
-    font-weight: 500;
-    letter-spacing: -0.3px;
-  }
-  .logo-sub {
-    font-size: 11px;
-    color: var(--muted);
-    font-family: 'DM Mono', monospace;
-    margin-top: 1px;
-  }
-  .auth-pill {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    padding: 6px 12px;
-    border-radius: 20px;
-    border: 1px solid var(--border2);
-    font-size: 12px;
-    color: var(--muted);
-    background: var(--surface);
-    transition: all 0.2s;
-  }
-  .auth-pill.signed-in {
-    border-color: var(--success);
-    color: var(--success);
-  }
-  .auth-dot {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: var(--border2);
-    transition: background 0.3s;
-  }
-  .auth-pill.signed-in .auth-dot { background: var(--success); }
-
-  /* Config panel */
-  .config-panel {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 20px;
-    margin-bottom: 16px;
-  }
-  .panel-label {
-    font-size: 10px;
-    font-weight: 500;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 14px;
-    font-family: 'DM Mono', monospace;
-  }
-  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .field { display: flex; flex-direction: column; gap: 5px; }
-  .field label {
-    font-size: 11px;
-    color: var(--muted);
-    font-family: 'DM Mono', monospace;
-  }
-  input[type="text"], input[type="email"], textarea {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text);
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-    padding: 9px 12px;
-    width: 100%;
-    outline: none;
-    transition: border-color 0.15s;
-  }
-  input[type="text"]:focus, input[type="email"]:focus, textarea:focus {
-    border-color: var(--accent2);
-  }
-  input::placeholder, textarea::placeholder { color: #555; }
-  textarea {
-    resize: vertical;
-    min-height: 130px;
-    font-size: 13px;
-    font-family: 'DM Sans', sans-serif;
-    line-height: 1.6;
-  }
-
-  /* Sign in button */
-  .btn-signin {
-    width: 100%;
-    padding: 11px;
-    background: var(--accent);
-    color: #0f0f0f;
-    border: none;
-    border-radius: var(--radius);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    transition: background 0.15s, transform 0.1s;
-    margin-top: 4px;
-  }
-  .btn-signin:hover { background: #f0c55a; }
-  .btn-signin:active { transform: scale(0.99); }
-  .btn-signout {
-    background: transparent;
-    border: 1px solid var(--border2);
-    color: var(--muted);
-    border-radius: var(--radius);
-    padding: 7px 14px;
-    font-size: 12px;
-    cursor: pointer;
-    font-family: 'DM Sans', sans-serif;
-    transition: border-color 0.15s, color 0.15s;
-    display: none;
-  }
-  .btn-signout:hover { border-color: var(--danger); color: var(--danger); }
-
-  /* Compose panel */
-  .compose-panel {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 20px;
-    margin-bottom: 16px;
-    opacity: 0.4;
-    pointer-events: none;
-    transition: opacity 0.3s;
-  }
-  .compose-panel.active { opacity: 1; pointer-events: all; }
-  .compose-fields { display: flex; flex-direction: column; gap: 12px; }
-
-  /* Send button */
-  .btn-send {
-    width: 100%;
-    padding: 13px;
-    background: var(--surface);
-    color: var(--text);
-    border: 1px solid var(--border2);
-    border-radius: var(--radius);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 9px;
-    transition: all 0.15s;
-    opacity: 0.4;
-    pointer-events: none;
-  }
-  .btn-send.active {
-    opacity: 1;
-    pointer-events: all;
-    border-color: var(--accent);
-    color: var(--accent);
-  }
-  .btn-send.active:hover { background: var(--accent); color: #0f0f0f; }
-  .btn-send:active { transform: scale(0.99); }
-
-  /* Status bar */
-  .status-bar {
-    height: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 7px;
-    font-size: 12px;
-    font-family: 'DM Mono', monospace;
-    margin-top: 12px;
-    color: transparent;
-    transition: color 0.2s;
-  }
-  .status-bar.ok { color: var(--success); }
-  .status-bar.err { color: var(--danger); }
-  .status-bar.busy { color: var(--muted); }
-
-  /* Toggle row */
-  .toggle-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .toggle {
-    appearance: none;
-    width: 32px; height: 18px;
-    background: var(--border2);
-    border-radius: 9px;
-    position: relative;
-    cursor: pointer;
-    transition: background 0.2s;
-    flex-shrink: 0;
-  }
-  .toggle::after {
-    content: '';
-    position: absolute;
-    width: 12px; height: 12px;
-    border-radius: 50%;
-    background: #fff;
-    top: 3px; left: 3px;
-    transition: transform 0.2s;
-  }
-  .toggle:checked { background: var(--accent); }
-  .toggle:checked::after { transform: translateX(14px); }
-  .toggle-row label {
-    font-size: 12px;
-    color: var(--muted);
-    cursor: pointer;
-  }
-
-  /* Divider */
-  .divider {
-    height: 1px;
-    background: var(--border);
-    margin: 4px 0 12px;
-  }
-
-  @media (max-width: 480px) {
-    .row2 { grid-template-columns: 1fr; }
-  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0f1a2e; color: #e2e8f0; font-family: 'Arial Narrow', Arial, sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .container { width: 100%; max-width: 560px; }
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  .logo { display: flex; align-items: center; gap: 12px; }
+  .logo-box { width: 42px; height: 42px; background: #e8b84b; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; color: #0f1a2e; }
+  .logo-text h1 { font-size: 18px; font-weight: 700; color: #e2e8f0; }
+  .logo-text p { font-size: 11px; color: #4a5568; }
+  .badge { padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .badge.signed-in { background: #27ae6022; color: #27ae60; border: 1px solid #27ae6044; }
+  .badge.signed-out { background: #a9322622; color: #a93226; border: 1px solid #a9322644; }
+  .card { background: #142236; border: 1px solid #2e4066; border-radius: 10px; padding: 20px; margin-bottom: 16px; }
+  .card-label { font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #4a5568; margin-bottom: 12px; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .field { margin-bottom: 10px; }
+  .field label { display: block; font-size: 10px; color: #4a5568; margin-bottom: 4px; }
+  .field input, .field textarea { width: 100%; background: #0f1a2e; border: 1px solid #2e4066; border-radius: 6px; padding: 9px 12px; color: #e2e8f0; font-size: 12px; font-family: inherit; outline: none; transition: border-color .2s; }
+  .field input:focus, .field textarea:focus { border-color: #e8b84b44; }
+  .field textarea { resize: vertical; min-height: 120px; }
+  .field input[readonly] { color: #4a5568; cursor: default; }
+  .toggle-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+  .toggle { width: 34px; height: 18px; background: #2e4066; border-radius: 9px; position: relative; cursor: pointer; border: none; transition: background .2s; }
+  .toggle.on { background: #e8b84b; }
+  .toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; background: #0f1a2e; border-radius: 50%; transition: left .2s; }
+  .toggle.on::after { left: 18px; }
+  .toggle-label { font-size: 11px; color: #4a5568; }
+  .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; transition: opacity .2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .btn-primary { background: #e8b84b; color: #0f1a2e; }
+  .btn-primary:hover { opacity: .9; }
+  .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+  .btn-sign-in { background: #e8b84b22; color: #e8b84b; border: 1px solid #e8b84b44; }
+  .btn-sign-out { background: #a9322622; color: #a93226; border: 1px solid #a9322644; font-size: 11px; padding: 5px 12px; width: auto; border-radius: 20px; }
+  .status { margin-top: 12px; text-align: center; font-size: 12px; font-weight: 600; min-height: 18px; }
+  .status.success { color: #27ae60; }
+  .status.error { color: #a93226; }
+  .status.info { color: #5b9cf6; }
+  .compose-wrapper { opacity: .4; pointer-events: none; transition: opacity .3s; }
+  .compose-wrapper.active { opacity: 1; pointer-events: all; }
 </style>
 </head>
 <body>
-<div class="shell">
-
+<div class="container">
   <div class="header">
     <div class="logo">
-      <div class="logo-mark">DMG</div>
-      <div>
-        <div class="logo-text">Email Sender</div>
-        <div class="logo-sub">Microsoft Graph</div>
+      <div class="logo-box">DMG</div>
+      <div class="logo-text">
+        <h1>Email Sender</h1>
+        <p>Microsoft Graph</p>
       </div>
     </div>
-    <div class="auth-pill" id="authPill">
-      <div class="auth-dot"></div>
-      <span id="authPillText">Not signed in</span>
-    </div>
+    <div id="authBadge" class="badge signed-out">● Not signed in</div>
   </div>
 
-  <!-- Azure Config -->
-  <div class="config-panel">
-    <div class="panel-label">Azure App Registration</div>
-    <div class="row2" style="margin-bottom:12px;">
+  <div class="card">
+    <div class="card-label">Azure App Registration</div>
+    <div class="field-row">
       <div class="field">
         <label>Tenant ID</label>
-        <input type="text" id="tenantId" value="e8920695-bc3c-43df-acf2-8d101b8adb63" readonly />
+        <input type="text" id="tenantId" value="e8920695-bc3c-43df-acf2-8d101b8adb63" readonly>
       </div>
       <div class="field">
         <label>Client ID</label>
-        <input type="text" id="clientId" value="30273390-649b-426d-bb06-e8ceba358bd6" readonly />
+        <input type="text" id="clientId" value="30273390-649b-426d-bb06-e8ceba358bd6" readonly>
       </div>
     </div>
-    <div style="display:flex; gap:10px; align-items:center;">
-      <button class="btn-signin" id="loginBtn" onclick="handleLogin()">
-        <svg width="16" height="16" viewBox="0 0 21 21" fill="none"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg>
-        Sign in with Microsoft
-      </button>
-      <button class="btn-signout" id="logoutBtn" onclick="handleLogout()">Sign out</button>
-    </div>
-    <div class="status-bar" id="authStatus"></div>
+    <div id="authStatus" class="status info">Click "Sign in" to authenticate</div>
+    <br>
+    <button id="signInBtn" class="btn btn-sign-in" onclick="signIn()">🔐 Sign in with Microsoft</button>
   </div>
 
-  <!-- Compose -->
-  <div class="compose-panel" id="composePanel">
-    <div class="panel-label">Compose</div>
-    <div class="compose-fields">
+  <div id="composeWrapper" class="compose-wrapper card">
+    <div class="card-label">Compose</div>
+    <div class="field">
+      <label>To</label>
+      <input type="email" id="toField" placeholder="recipient@example.com">
+    </div>
+    <div class="field-row">
       <div class="field">
-        <label>To</label>
-        <input type="email" id="toField" placeholder="recipient@example.com" />
-      </div>
-      <div class="row2">
-        <div class="field">
-          <label>CC (optional)</label>
-          <input type="email" id="ccField" placeholder="cc@example.com" />
-        </div>
-        <div class="field">
-          <label>BCC (optional)</label>
-          <input type="email" id="bccField" placeholder="bcc@example.com" />
-        </div>
+        <label>CC (optional)</label>
+        <input type="email" id="ccField" placeholder="cc@example.com">
       </div>
       <div class="field">
-        <label>Subject</label>
-        <input type="text" id="subjectField" placeholder="Subject line" />
+        <label>BCC (optional)</label>
+        <input type="email" id="bccField" placeholder="bcc@example.com">
       </div>
-      <div class="field">
-        <label>Body</label>
-        <textarea id="bodyField" placeholder="Message body…"></textarea>
-      </div>
-      <div class="toggle-row">
-        <input type="checkbox" class="toggle" id="htmlToggle" />
-        <label for="htmlToggle">Send as HTML</label>
-      </div>
+    </div>
+    <div class="field">
+      <label>Subject</label>
+      <input type="text" id="subjectField" placeholder="Subject line">
+    </div>
+    <div class="field">
+      <label>Body</label>
+      <textarea id="bodyField" placeholder="Message body..."></textarea>
+    </div>
+    <div class="toggle-row">
+      <button class="toggle" id="htmlToggle" onclick="toggleHtml()"></button>
+      <span class="toggle-label">Send as HTML</span>
     </div>
   </div>
 
-  <button class="btn-send" id="sendBtn" onclick="sendEmail()">
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-    Send Email
-  </button>
-
-  <div class="status-bar" id="sendStatus"></div>
-
+  <button id="sendBtn" class="btn btn-primary" onclick="sendEmail()" disabled>✈ Send Email</button>
+  <div id="sendStatus" class="status"></div>
 </div>
 
 <script>
-let msalInstance = null;
-let account = null;
+  let msalInstance = null;
+  let account = null;
+  let isHtml = false;
 
-function getMsalConfig() {
-  const tenantId = 'e8920695-bc3c-43df-acf2-8d101b8adb63';
-  const clientId = '30273390-649b-426d-bb06-e8ceba358bd6';
-  
-  return {
+  const TENANT_ID = document.getElementById('tenantId').value;
+  const CLIENT_ID = document.getElementById('clientId').value;
+  const REDIRECT_URI = 'https://dmgcontracting.github.io/dmg-email/';
+
+  const msalConfig = {
     auth: {
-      clientId,
-      authority: `https://login.microsoftonline.com/${tenantId}`,
-      redirectUri: "https://dmgcontracting.github.io/dmg-email/"
+      clientId: CLIENT_ID,
+      authority: 'https://login.microsoftonline.com/' + TENANT_ID,
+      redirectUri: REDIRECT_URI,
+      navigateToLoginRequestUrl: true,
     },
-    cache: { cacheLocation: 'localStorage', storeAuthStateInCookie: true }
-  };
-}
-
-function setAuthStatus(type, msg) {
-  const el = document.getElementById('authStatus');
-  el.className = 'status-bar ' + type;
-  el.textContent = msg;
-}
-
-function setSendStatus(type, msg) {
-  const el = document.getElementById('sendStatus');
-  el.className = 'status-bar ' + type;
-  el.textContent = msg;
-}
-
-function setSignedIn(username) {
-  const pill = document.getElementById('authPill');
-  pill.classList.add('signed-in');
-  document.getElementById('authPillText').textContent = username;
-  document.getElementById('loginBtn').style.display = 'none';
-  document.getElementById('logoutBtn').style.display = '';
-  document.getElementById('composePanel').classList.add('active');
-  document.getElementById('sendBtn').classList.add('active');
-}
-
-function setSignedOut() {
-  const pill = document.getElementById('authPill');
-  pill.classList.remove('signed-in');
-  document.getElementById('authPillText').textContent = 'Not signed in';
-  document.getElementById('loginBtn').style.display = '';
-  document.getElementById('logoutBtn').style.display = 'none';
-  document.getElementById('composePanel').classList.remove('active');
-  document.getElementById('sendBtn').classList.remove('active');
-}
-
-async function handleLogin() {
-  const cfg = getMsalConfig();
-  if (!cfg) { setAuthStatus('err', 'Enter Tenant ID and Client ID first'); return; }
-  try {
-    msalInstance = new msal.PublicClientApplication(cfg);
-    await msalInstance.initialize();
-    setAuthStatus('busy', 'Opening sign-in…');
-    const result = await msalInstance.loginPopup({ scopes: ['Mail.Send', 'User.Read'] });
-    account = result.account;
-    setSignedIn(account.username);
-    setAuthStatus('ok', 'Authenticated successfully');
-  } catch(e) {
-    setAuthStatus('err', e.message || 'Sign-in failed');
-  }
-}
-
-async function handleLogout() {
-  if (msalInstance && account) {
-    try { await msalInstance.logoutPopup({ account }); } catch {}
-  }
-  account = null; msalInstance = null;
-  setSignedOut();
-  setAuthStatus('', '');
-}
-
-function makeRecipients(val) {
-  return val.split(',').map(e => e.trim()).filter(Boolean)
-    .map(address => ({ emailAddress: { address } }));
-}
-
-async function sendEmail() {
-  if (!account || !msalInstance) { setSendStatus('err', 'Not signed in'); return; }
-  const to = document.getElementById('toField').value.trim();
-  const cc = document.getElementById('ccField').value.trim();
-  const bcc = document.getElementById('bccField').value.trim();
-  const subject = document.getElementById('subjectField').value.trim();
-  const body = document.getElementById('bodyField').value;
-  const isHtml = document.getElementById('htmlToggle').checked;
-  if (!to || !subject) { setSendStatus('err', 'To and Subject are required'); return; }
-
-  setSendStatus('busy', 'Acquiring token…');
-  let token;
-  try {
-    const res = await msalInstance.acquireTokenSilent({ scopes: ['Mail.Send'], account });
-    token = res.accessToken;
-  } catch {
-    try {
-      const res = await msalInstance.acquireTokenPopup({ scopes: ['Mail.Send'], account });
-      token = res.accessToken;
-    } catch(e) { setSendStatus('err', 'Token error: ' + e.message); return; }
-  }
-
-  const message = {
-    subject,
-    body: { contentType: isHtml ? 'HTML' : 'Text', content: body },
-    toRecipients: makeRecipients(to)
-  };
-  if (cc) message.ccRecipients = makeRecipients(cc);
-  if (bcc) message.bccRecipients = makeRecipients(bcc);
-
-  setSendStatus('busy', 'Sending…');
-  try {
-    const resp = await fetch('https://graph.microsoft.com/v1.0/me/sendMail', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, saveToSentItems: true })
-    });
-    if (resp.status === 202) {
-      setSendStatus('ok', 'Email sent successfully');
-      document.getElementById('toField').value = '';
-      document.getElementById('ccField').value = '';
-      document.getElementById('bccField').value = '';
-      document.getElementById('subjectField').value = '';
-      document.getElementById('bodyField').value = '';
-    } else {
-      const err = await resp.json().catch(() => ({}));
-      setSendStatus('err', err?.error?.message || `Error ${resp.status}`);
+    cache: {
+      cacheLocation: 'sessionStorage',
+      storeAuthStateInCookie: true,
     }
-  } catch(e) { setSendStatus('err', 'Network error: ' + e.message); }
-}
+  };
+
+  const loginRequest = {
+    scopes: ['https://graph.microsoft.com/Mail.Send', 'https://graph.microsoft.com/User.Read']
+  };
+
+  async function initMsal() {
+    msalInstance = new msal.PublicClientApplication(msalConfig);
+    await msalInstance.initialize();
+
+    // Handle redirect response after login
+    try {
+      const response = await msalInstance.handleRedirectPromise();
+      if (response && response.account) {
+        account = response.account;
+        setSignedIn(account.username);
+        return;
+      }
+    } catch (e) {
+      console.error('Redirect error:', e);
+    }
+
+    // Check for existing account
+    const accounts = msalInstance.getAllAccounts();
+    if (accounts.length > 0) {
+      account = accounts[0];
+      setSignedIn(account.username);
+    }
+  }
+
+  function setSignedIn(username) {
+    document.getElementById('authBadge').className = 'badge signed-in';
+    document.getElementById('authBadge').textContent = '● ' + username;
+    document.getElementById('authStatus').className = 'status success';
+    document.getElementById('authStatus').textContent = 'Authenticated successfully';
+    document.getElementById('signInBtn').textContent = '🔓 Sign out';
+    document.getElementById('signInBtn').className = 'btn btn-sign-out';
+    document.getElementById('signInBtn').onclick = signOut;
+    document.getElementById('composeWrapper').classList.add('active');
+    document.getElementById('sendBtn').disabled = false;
+  }
+
+  function signIn() {
+    if (!msalInstance) return;
+    // Use redirect — no popup issues
+    msalInstance.loginRedirect(loginRequest);
+  }
+
+  function signOut() {
+    if (!msalInstance || !account) return;
+    msalInstance.logoutRedirect({ account });
+  }
+
+  function toggleHtml() {
+    isHtml = !isHtml;
+    const btn = document.getElementById('htmlToggle');
+    btn.classList.toggle('on', isHtml);
+  }
+
+  async function getToken() {
+    const silentRequest = { ...loginRequest, account };
+    try {
+      const response = await msalInstance.acquireTokenSilent(silentRequest);
+      return response.accessToken;
+    } catch (e) {
+      // Silent failed — redirect for new token
+      msalInstance.acquireTokenRedirect(silentRequest);
+      return null;
+    }
+  }
+
+  async function sendEmail() {
+    const to = document.getElementById('toField').value.trim();
+    const cc = document.getElementById('ccField').value.trim();
+    const bcc = document.getElementById('bccField').value.trim();
+    const subject = document.getElementById('subjectField').value.trim();
+    const body = document.getElementById('bodyField').value.trim();
+    const statusEl = document.getElementById('sendStatus');
+
+    if (!to) { statusEl.className = 'status error'; statusEl.textContent = 'Please enter a recipient.'; return; }
+    if (!subject) { statusEl.className = 'status error'; statusEl.textContent = 'Please enter a subject.'; return; }
+    if (!body) { statusEl.className = 'status error'; statusEl.textContent = 'Please enter a message body.'; return; }
+
+    statusEl.className = 'status info';
+    statusEl.textContent = 'Sending…';
+    document.getElementById('sendBtn').disabled = true;
+
+    const token = await getToken();
+    if (!token) return;
+
+    const message = {
+      subject,
+      body: { contentType: isHtml ? 'HTML' : 'Text', content: body },
+      toRecipients: [{ emailAddress: { address: to } }]
+    };
+    if (cc) message.ccRecipients = [{ emailAddress: { address: cc } }];
+    if (bcc) message.bccRecipients = [{ emailAddress: { address: bcc } }];
+
+    try {
+      const res = await fetch('https://graph.microsoft.com/v1.0/me/sendMail', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message, saveToSentItems: true })
+      });
+
+      if (res.status === 202) {
+        statusEl.className = 'status success';
+        statusEl.textContent = '✅ Email sent successfully!';
+        document.getElementById('toField').value = '';
+        document.getElementById('subjectField').value = '';
+        document.getElementById('bodyField').value = '';
+      } else {
+        const err = await res.json();
+        statusEl.className = 'status error';
+        statusEl.textContent = '❌ Error: ' + (err.error?.message || res.status);
+      }
+    } catch (e) {
+      statusEl.className = 'status error';
+      statusEl.textContent = '❌ Network error: ' + e.message;
+    }
+
+    document.getElementById('sendBtn').disabled = false;
+  }
+
+  // Init on load
+  initMsal();
 </script>
 </body>
 </html>
+
