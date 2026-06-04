@@ -211,7 +211,7 @@
 
     if (!to) { statusEl.className = 'status error'; statusEl.textContent = 'Please enter a recipient.'; return; }
     if (!subject) { statusEl.className = 'status error'; statusEl.textContent = 'Please enter a subject.'; return; }
-    if (!body) { statusEl.className = 'status error'; statusEl.textContent = 'Please enter a message body.'; return; }
+    
 
     statusEl.className = 'status info';
     statusEl.textContent = 'Sending…';
@@ -222,7 +222,7 @@
 
     const message = {
       subject,
-      body: { contentType: isHtml ? 'HTML' : 'Text', content: body },
+      body: { contentType: isHtml ? 'HTML' : 'Text', content: body || '' },
       toRecipients: [{ emailAddress: { address: to } }]
     };
     if (cc) message.ccRecipients = [{ emailAddress: { address: cc } }];
@@ -259,4 +259,3 @@
 </script>
 </body>
 </html>
-
